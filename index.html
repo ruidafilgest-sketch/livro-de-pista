@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Livro de Pista · Minigolfe Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1E3D; --navy-light:#142B52; --navy-lighter:#1E3A66;
+    --gold:#C9A227; --gold-light:#E4C766; --cream:#F4EFE6;
+    --red:#C0392B; --green:#4C8C4A; --amber:#D08A2A; --blue:#3E7CB1;
+    --gray:#8A93A6; --border:rgba(244,239,230,0.12);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--navy);color:var(--cream);font-family:'Outfit',sans-serif;}
+  body{min-height:100vh; -webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em;}
+  button{font-family:'Outfit',sans-serif; cursor:pointer;}
+  input,select,textarea{font-family:'Outfit',sans-serif;}
+
+  #app{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+
+  header.topbar{background:linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);padding:14px 16px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;}
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .brand{font-size:24px;color:var(--gold-light);line-height:1;}
+  .brand small{display:block;font-family:'Outfit',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-top:2px;}
+  .status-pill{font-size:10px;padding:4px 8px;border-radius:20px;background:rgba(76,140,74,0.15);color:var(--green);border:1px solid rgba(76,140,74,0.3);white-space:nowrap;flex:0 0 auto;}
+  .status-pill.offline{background:rgba(208,138,42,0.15);color:var(--amber);border-color:rgba(208,138,42,0.3);}
+
+  .club-banner{display:flex;align-items:center;justify-content:space-between;background:var(--navy-lighter);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:12px;}
+  .club-banner .info{min-width:0;}
+  .club-banner .name{font-family:'Bebas Neue';font-size:20px;color:var(--cream);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .club-banner .loc{font-size:11px;color:var(--gray);margin-top:1px;}
+  .club-banner .edit-btn{flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--gold-light);font-size:11px;padding:6px 10px;border-radius:8px;}
+  .club-switch{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;}
+  .club-chip{flex:0 0 auto;padding:6px 12px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--gray);font-size:12px;white-space:nowrap;}
+  .club-chip.active{border-color:var(--gold);color:var(--gold-light);}
+  .club-chip.add{border-style:dashed;}
+
+  .tabs{display:flex;gap:6px;margin-top:12px;}
+  .tab{flex:1;text-align:center;padding:9px 4px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--gray);font-size:13px;font-weight:600;}
+  .tab.active{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+
+  main{flex:1;padding:16px;padding-bottom:100px;}
+  .config-banner{background:rgba(208,138,42,0.12);border:1px solid rgba(208,138,42,0.3);color:var(--amber);font-size:12px;padding:10px 14px;border-radius:10px;margin-bottom:14px;line-height:1.5;}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .pista-card{background:var(--navy-light);border:1px solid var(--border);border-radius:14px;padding:10px 8px 9px;text-align:center;position:relative;overflow:hidden;}
+  .pista-card .num{font-family:'Bebas Neue';font-size:26px;color:var(--cream);line-height:1;}
+  .pista-card .nome{font-size:11px;color:var(--gold-light);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pista-card .sub{font-size:9px;color:var(--gray);margin-top:2px;}
+  .pista-card .dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--gray);}
+  .pista-card .dot.ok{background:var(--green);}
+  .pista-card .dot.alerta{background:var(--red);}
+  .pista-card .dot.vazio{background:var(--gray);opacity:0.4;}
+  .pista-card .regcount{font-size:9px;color:var(--gray);margin-top:3px;}
+  .pista-card:active{background:var(--navy-lighter);}
+
+  .empty-hint{color:var(--gray);font-size:13px;text-align:center;padding:40px 20px;line-height:1.6;}
+
+  .fab{position:fixed;bottom:22px;left:50%;transform:translateX(0);max-width:640px;width:calc(100% - 32px);display:flex;justify-content:flex-end;pointer-events:none;}
+  .fab-inner{margin:0 16px;pointer-events:auto;}
+  .fab button{background:var(--gold);color:var(--navy);border:none;border-radius:50%;width:56px;height:56px;font-size:26px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,0.4);}
+
+  .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:50;display:none;align-items:flex-end;justify-content:center;}
+  .sheet-overlay.open{display:flex;}
+  .sheet{background:var(--navy);width:100%;max-width:640px;border-radius:20px 20px 0 0;max-height:94vh;overflow-y:auto;padding:0 0 24px;border-top:1px solid var(--border);}
+  .sheet-handle{width:40px;height:4px;background:var(--gray);opacity:0.4;border-radius:4px;margin:10px auto;}
+  .sheet-header{display:flex;align-items:flex-start;justify-content:space-between;padding:4px 18px 12px;border-bottom:1px solid var(--border);gap:10px;}
+  .sheet-header .titles{flex:1;min-width:0;}
+  .sheet-header input.nome-pista{width:100%;background:none;border:none;border-bottom:1px dashed var(--border);color:var(--gold-light);font-family:'Bebas Neue';font-size:24px;padding:2px 0;}
+  .sheet-header .meta{font-size:11px;color:var(--gray);margin-top:2px;}
+  .sheet-header .close{background:none;border:none;color:var(--gray);font-size:22px;padding:6px;flex:0 0 auto;}
+  .sheet-body{padding:14px 18px 6px;}
+
+  .field-group{margin-bottom:14px;}
+  .field-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray);margin-bottom:5px;}
+  .field-group input, .field-group select, .field-group textarea{width:100%;background:var(--navy-light);border:1px solid var(--border);color:var(--cream);padding:11px 12px;border-radius:10px;font-size:15px;}
+  .field-group textarea{min-height:56px;resize:vertical;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
+  .section-title{font-size:19px;color:var(--gold-light);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .section-title.first{border-top:none;padding-top:0;margin-top:2px;}
+  .section-title .hint{font-size:10px;color:var(--gray);font-family:'Outfit';text-transform:none;letter-spacing:0;}
+
+  .estado-toggle{display:flex;gap:8px;}
+  .estado-btn{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--navy-light);color:var(--gray);font-size:13px;font-weight:600;}
+  .estado-btn.sel-normal.active{background:rgba(76,140,74,0.2);border-color:var(--green);color:var(--green);}
+  .estado-btn.sel-atencao.active{background:rgba(208,138,42,0.2);border-color:var(--amber);color:var(--amber);}
+  .estado-btn.sel-alerta.active{background:rgba(192,57,43,0.2);border-color:var(--red);color:var(--red);}
+
+  .custom-field{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;}
+  .custom-field input:first-child{flex:0 0 40%;}
+  .custom-field .rm{background:none;border:none;color:var(--red);font-size:20px;padding:8px 4px;flex:0 0 auto;}
+  .add-custom, .add-registo{background:none;border:1px dashed var(--border);color:var(--gold-light);width:100%;padding:11px;border-radius:10px;font-size:13px;font-weight:600;}
+
+  .registo-card{background:var(--navy-light);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:9px;}
+  .registo-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .registo-card .data{font-size:12px;color:var(--gold-light);font-weight:700;}
+  .registo-card .badges{display:flex;gap:5px;}
+  .badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--navy-lighter);color:var(--gray);border:1px solid var(--border);}
+  .badge.frio{color:var(--blue);border-color:rgba(62,124,177,0.4);}
+  .badge.calor{color:var(--amber);border-color:rgba(208,138,42,0.4);}
+  .registo-card .rm{background:none;border:none;color:var(--red);font-size:16px;padding:2px 4px;}
+  .registo-card .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12.5px;color:var(--cream);}
+  .registo-card .grid2 span.k{color:var(--gray);}
+  .registo-card .nota{margin-top:6px;font-size:12.5px;color:var(--gray);font-style:italic;}
+  .hist-empty{color:var(--gray);font-size:13px;padding:8px 0;}
+
+  .hist-item{padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--gray);}
+  .hist-item b{color:var(--cream);}
+
+  .save-bar{padding:14px 18px 4px;}
+  .save-btn{width:100%;background:var(--gold);color:var(--navy);border:none;padding:14px;border-radius:12px;font-size:16px;font-weight:700;}
+  .del-btn{width:100%;background:none;color:var(--red);border:1px solid rgba(192,57,43,0.3);padding:11px;border-radius:12px;font-size:13px;margin-top:8px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:60;display:none;align-items:center;justify-content:center;padding:24px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--navy-light);border-radius:16px;padding:20px;width:100%;max-width:400px;border:1px solid var(--border);max-height:88vh;overflow-y:auto;}
+  .modal h3{margin:0 0 14px;font-size:22px;color:var(--gold-light);}
+  .modal .field-group{margin-bottom:12px;}
+  .modal-actions{display:flex;gap:10px;margin-top:6px;}
+  .modal-actions button{flex:1;padding:11px;border-radius:10px;border:none;font-weight:600;font-size:14px;}
+  .modal-actions .cancel{background:transparent;border:1px solid var(--border);color:var(--gray);}
+  .modal-actions .confirm{background:var(--gold);color:var(--navy);}
+  .modal-actions .danger{background:rgba(192,57,43,0.15);color:var(--red);border:1px solid rgba(192,57,43,0.3);}
+
+  .toggle-row{display:flex;gap:8px;}
+  .toggle-opt{flex:1;text-align:center;padding:9px 4px;border-radius:10px;border:1px solid var(--border);background:var(--navy);color:var(--gray);font-size:12px;font-weight:600;}
+  .toggle-opt.active{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:100;opacity:0;transition:opacity .25s;pointer-events:none;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">Livro de Pista<small>Minigolfe · Petergolfe · Feltro</small></div>
+      <span class="status-pill" id="statusPill">local</span>
+    </div>
+
+    <div class="club-banner" id="clubBanner" style="display:none">
+      <div class="info">
+        <div class="name" id="clubName">—</div>
+        <div class="loc" id="clubLoc">—</div>
+      </div>
+      <button class="edit-btn" id="btnEditClub">editar</button>
+    </div>
+    <div class="club-switch" id="clubSwitch"></div>
+
+    <div class="tabs" id="vertenteTabs"></div>
+  </header>
+
+  <main>
+    <div class="config-banner" id="configBanner" style="display:none">
+      A gravar apenas neste telemóvel (modo local). Toca em ⚙ para ligar o Firebase e sincronizar entre dispositivos.
+    </div>
+    <div class="grid" id="pistaGrid"></div>
+    <div class="empty-hint" id="emptyHint" style="display:none"></div>
+  </main>
+
+  <div class="fab"><div class="fab-inner"><button id="btnAdd">+</button></div></div>
+</div>
+
+<!-- Sheet: pista -->
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="titles">
+        <input type="text" class="nome-pista" id="fNome" placeholder="Nome da pista (opcional)">
+        <div class="meta" id="sheetMeta"></div>
+      </div>
+      <button class="close" id="sheetClose">&times;</button>
+    </div>
+    <div class="sheet-body">
+
+      <div class="section-title first">Estado geral da pista</div>
+      <div class="estado-toggle" id="estadoToggle">
+        <button type="button" class="estado-btn sel-normal" data-v="normal">Normal</button>
+        <button type="button" class="estado-btn sel-atencao" data-v="atencao">Atenção</button>
+        <button type="button" class="estado-btn sel-alerta" data-v="alerta">Alerta</button>
+      </div>
+      <div class="field-group" style="margin-top:10px">
+        <label>Nota de estado (ex: obstáculo deslocado, obra recente)</label>
+        <input type="text" id="fEstadoNota" placeholder="opcional">
+      </div>
+
+      <div class="section-title">Ficha de referência<span class="hint">o que costuma valer nesta pista</span></div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Caimento geral</label>
+          <input type="text" id="fCaimento" placeholder="ex: cai para a direita no final">
+        </div>
+        <div class="field-group">
+          <label>Direção geral ao buraco</label>
+          <select id="fDirecaoGeral">
+            <option value="reto">A direito</option>
+            <option value="esquerda">Emenda esquerda</option>
+            <option value="direita">Emenda direita</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Referências fixas da pista</label>
+        <input type="text" id="fReferencias" placeholder="ex: alinhar com a antena, risca na parede direita">
+      </div>
+      <div class="field-group">
+        <label>Observações gerais</label>
+        <textarea id="fObs" placeholder="qualquer coisa que valha sempre nesta pista"></textarea>
+      </div>
+
+      <div class="section-title">Campos personalizados</div>
+      <div id="customFields"></div>
+      <button type="button" class="add-custom" id="btnAddCustom">+ adicionar campo novo</button>
+
+      <div class="section-title">Registos de jogadas<span class="hint">condição, bola, resultado</span></div>
+      <div id="registosList"></div>
+      <button type="button" class="add-registo" id="btnAddRegisto">+ novo registo de jogada</button>
+
+      <div class="section-title">Apontamento pessoal livre</div>
+      <div class="field-group">
+        <textarea id="fApontamento" placeholder="notas gerais, sensações, ajustes..."></textarea>
+      </div>
+
+      <div class="section-title">Histórico de alterações</div>
+      <div id="histList"></div>
+
+      <div class="save-bar">
+        <button class="save-btn" id="btnSave">Guardar pista</button>
+        <button class="del-btn" id="btnDelete">Eliminar esta pista</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: novo registo de jogada -->
+<div class="modal-overlay" id="modalRegisto">
+  <div class="modal">
+    <h3>Novo registo</h3>
+    <div class="field-group">
+      <label>Condição atmosférica</label>
+      <div class="toggle-row" id="rCondicao">
+        <div class="toggle-opt" data-v="frio">Frio</div>
+        <div class="toggle-opt" data-v="ameno">Ameno</div>
+        <div class="toggle-opt" data-v="calor">Calor</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Estado da pista no momento</label>
+      <div class="toggle-row" id="rEstadoPista">
+        <div class="toggle-opt" data-v="seca">Seca</div>
+        <div class="toggle-opt" data-v="humida">Húmida</div>
+        <div class="toggle-opt" data-v="rapida">Rápida</div>
+        <div class="toggle-opt" data-v="lenta">Lenta</div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label>Marca / referência da bola</label><input type="text" id="rMarca" placeholder="ex: Poli 3, Ace vermelha"></div>
+      <div class="field-group"><label>Salto</label><input type="text" id="rSalto" placeholder="ex: baixo, médio, alto"></div>
+    </div>
+    <div class="field-group">
+      <label>Bola mole ou dura</label>
+      <div class="toggle-row" id="rDureza">
+        <div class="toggle-opt" data-v="mole">Mole</div>
+        <div class="toggle-opt" data-v="media">Média</div>
+        <div class="toggle-opt" data-v="dura">Dura</div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label>Força da tacada</label><input type="text" id="rForca" placeholder="ex: 3 de 10"></div>
+      <div class="field-group"><label>Ponto de saída</label><input type="text" id="rSaida" placeholder="ex: canto esquerdo"></div>
+    </div>
+    <div class="field-group"><label>Apontar a quê</label><input type="text" id="rApontaA" placeholder="ex: à antena, à marca na parede, ao centro"></div>
+    <div class="field-group">
+      <label>Ângulo do taco</label>
+      <div class="toggle-row" id="rTaco">
+        <div class="toggle-opt" data-v="reto">Reto</div>
+        <div class="toggle-opt" data-v="abrir">Abrir</div>
+        <div class="toggle-opt" data-v="fechar">Fechar</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Direção da emenda</label>
+      <div class="toggle-row" id="rEmenda">
+        <div class="toggle-opt" data-v="reto">Reto</div>
+        <div class="toggle-opt" data-v="esquerda">Esquerda</div>
+        <div class="toggle-opt" data-v="direita">Direita</div>
+      </div>
+    </div>
+    <div class="field-group"><label>Onde a bola ficou</label><input type="text" id="rOndeFicou" placeholder="ex: curto à direita, 20cm do buraco"></div>
+    <div class="field-group"><label>Resultado (nº de pancadas)</label><input type="text" id="rResultado" placeholder="opcional"></div>
+    <div class="field-group"><label>Nota</label><textarea id="rNota" placeholder="opcional"></textarea></div>
+    <div class="modal-actions">
+      <button class="cancel" id="rCancel">Cancelar</button>
+      <button class="confirm" id="rConfirm">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: novo/editar clube-circuito -->
+<div class="modal-overlay" id="modalCircuito">
+  <div class="modal">
+    <h3 id="circuitoModalTitle">Novo clube / campo</h3>
+    <div class="field-group">
+      <label>Nome do clube / campo</label>
+      <input type="text" id="mNomeCircuito" placeholder="ex: Vizelgolfe, Óbidos, Figueira da Foz...">
+    </div>
+    <div class="field-group">
+      <label>Localidade / país</label>
+      <input type="text" id="mLocalCircuito" placeholder="ex: Vizela, Portugal">
+    </div>
+    <div class="field-group" id="mCountsWrap">
+      <label>Vertentes a criar (nº de pistas cada)</label>
+      <div class="field-row3">
+        <input type="number" id="mMini" placeholder="Mini" min="0" value="18">
+        <input type="number" id="mPeter" placeholder="Peter" min="0" value="0">
+        <input type="number" id="mFeltro" placeholder="Feltro" min="0" value="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="mCancel">Cancelar</button>
+      <button class="confirm" id="mConfirm">Guardar</button>
+    </div>
+    <div class="modal-actions" id="mDeleteWrap" style="display:none">
+      <button class="danger" id="mDeleteCircuito">Eliminar este clube/campo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: definições / firebase -->
+<div class="modal-overlay" id="modalConfig">
+  <div class="modal">
+    <h3>Definições</h3>
+    <div class="field-group">
+      <label>Configuração Firebase (cola aqui o objecto firebaseConfig)</label>
+      <textarea id="cfgFirebase" placeholder='{"apiKey":"...","projectId":"..."}' style="min-height:120px;font-size:12px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="cfgCancel">Fechar</button>
+      <button class="confirm" id="cfgSave">Ligar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* =========================================================================
+   LIVRO DE PISTA — Minigolfe / Petergolfe / Feltro Intelligence
+   circuitos/{id}: nome, local
+     pistas/{id}: numero, vertente, nome
+       estado_atual {condicao, nota, ultima_alteracao}
+       ficha_geral {caimento, direcao, observacoes}
+       campos_customizados [{campo, valor}]
+       registos [{id, data, condicao_atm, estado_pista, bola, forca, ponto_saida,
+                   direcao_emenda, onde_ficou, resultado, nota}]
+       apontamento_pessoal (texto)
+       historico [{data, campo, de, para}]  -- edições à ficha_geral / estado
+   ========================================================================= */
+
+const LS_KEY = 'livro_pista_data_v2';
+const LS_CFG = 'livro_pista_firebase_cfg';
+
+let db = null;
+let cloudMode = false;
+let state = {
+  circuitos: [],
+  pistasByCircuito: {},
+  currentCircuito: null,
+  currentVertente: 'minigolfe',
+  editingPistaId: null
+};
+
+/* ---------------- local storage ---------------- */
+function localLoad(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return null;
+}
+function localSave(){
+  localStorage.setItem(LS_KEY, JSON.stringify({circuitos:state.circuitos, pistasByCircuito:state.pistasByCircuito}));
+}
+
+function seedIfEmpty(){
+  const existing = localLoad();
+  if(existing && existing.circuitos && existing.circuitos.length){
+    state.circuitos = existing.circuitos;
+    state.pistasByCircuito = existing.pistasByCircuito || {};
+    return;
+  }
+  const circuitoId = 'vizelgolfe';
+  state.circuitos = [{id:circuitoId, nome:'Vizelgolfe', local:'Vizela, Portugal'}];
+  state.pistasByCircuito[circuitoId] = [];
+  ['minigolfe','petergolfe'].forEach(vert=>{
+    for(let n=1;n<=18;n++) state.pistasByCircuito[circuitoId].push(blankPista(circuitoId, vert, n));
+  });
+  localSave();
+}
+
+function blankPista(circuitoId, vertente, numero, nome){
+  return {
+    id: circuitoId+'_'+vertente+'_'+numero+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    circuitoId, vertente, numero, nome: nome||'',
+    estado_atual:{condicao:'normal', nota:'', ultima_alteracao:new Date().toISOString().slice(0,10)},
+    ficha_geral:{caimento:'', direcao:'reto', referencias:'', observacoes:''},
+    campos_customizados:[],
+    registos:[],
+    apontamento_pessoal:'',
+    historico:[]
+  };
+}
+
+/* ---------------- firebase (cloud) ---------------- */
+function tryInitFirebase(){
+  const raw = localStorage.getItem(LS_CFG);
+  if(!raw) return;
+  try{
+    const cfg = JSON.parse(raw);
+    firebase.initializeApp(cfg);
+    db = firebase.firestore();
+    cloudMode = true;
+    updateStatusPill();
+    loadFromCloud();
+  }catch(e){ console.error('Config Firebase inválida', e); cloudMode = false; }
+}
+
+async function loadFromCloud(){
+  try{
+    const circSnap = await db.collection('circuitos').get();
+    state.circuitos = []; state.pistasByCircuito = {};
+    for(const cDoc of circSnap.docs){
+      const c = {id:cDoc.id, ...cDoc.data()};
+      state.circuitos.push(c);
+      const pistasSnap = await db.collection('circuitos').doc(c.id).collection('pistas').get();
+      state.pistasByCircuito[c.id] = pistasSnap.docs.map(p=>({id:p.id, ...p.data()}));
+    }
+    if(!state.circuitos.length){ seedIfEmpty(); await pushAllToCloud(); }
+    if(!state.currentCircuito && state.circuitos.length) state.currentCircuito = state.circuitos[0].id;
+    render();
+  }catch(e){
+    console.error('Erro a carregar da nuvem, a usar modo local', e);
+    cloudMode = false; updateStatusPill();
+  }
+}
+
+async function pushAllToCloud(){
+  for(const c of state.circuitos){
+    await db.collection('circuitos').doc(c.id).set({nome:c.nome, local:c.local||''});
+    const pistas = state.pistasByCircuito[c.id];
+    for(const p of (pistas||[])){
+      const {id, ...data} = p;
+      await db.collection('circuitos').doc(c.id).collection('pistas').doc(id).set(data);
+    }
+  }
+}
+
+async function savePistaCloudOrLocal(pista){
+  const {id, circuitoId, ...data} = pista;
+  if(cloudMode) await db.collection('circuitos').doc(circuitoId).collection('pistas').doc(id).set(data);
+  const arr = state.pistasByCircuito[circuitoId];
+  const idx = arr.findIndex(p=>p.id===id);
+  if(idx>=0) arr[idx]=pista; else arr.push(pista);
+  localSave();
+}
+
+async function deletePistaCloudOrLocal(pista){
+  if(cloudMode) await db.collection('circuitos').doc(pista.circuitoId).collection('pistas').doc(pista.id).delete();
+  state.pistasByCircuito[pista.circuitoId] = state.pistasByCircuito[pista.circuitoId].filter(p=>p.id!==pista.id);
+  localSave();
+}
+
+async function saveCircuitoMeta(circuito){
+  if(cloudMode) await db.collection('circuitos').doc(circuito.id).set({nome:circuito.nome, local:circuito.local||''}, {merge:true});
+  const idx = state.circuitos.findIndex(c=>c.id===circuito.id);
+  if(idx>=0) state.circuitos[idx] = circuito;
+  localSave();
+}
+
+async function createCircuitoCloudOrLocal(circuito, pistas){
+  if(cloudMode){
+    await db.collection('circuitos').doc(circuito.id).set({nome:circuito.nome, local:circuito.local||''});
+    for(const p of pistas){
+      const {id, circuitoId, ...data} = p;
+      await db.collection('circuitos').doc(circuito.id).collection('pistas').doc(id).set(data);
+    }
+  }
+  state.circuitos.push(circuito);
+  state.pistasByCircuito[circuito.id] = pistas;
+  localSave();
+}
+
+async function deleteCircuitoCloudOrLocal(circuitoId){
+  if(cloudMode){
+    const pistasSnap = await db.collection('circuitos').doc(circuitoId).collection('pistas').get();
+    for(const d of pistasSnap.docs) await d.ref.delete();
+    await db.collection('circuitos').doc(circuitoId).delete();
+  }
+  state.circuitos = state.circuitos.filter(c=>c.id!==circuitoId);
+  delete state.pistasByCircuito[circuitoId];
+  localSave();
+}
+
+/* ---------------- rendering ---------------- */
+function updateStatusPill(){
+  const pill = document.getElementById('statusPill');
+  const banner = document.getElementById('configBanner');
+  if(cloudMode){ pill.textContent='sincronizado'; pill.classList.remove('offline'); banner.style.display='none'; }
+  else{ pill.textContent='local'; pill.classList.add('offline'); banner.style.display='block'; }
+}
+
+function render(){
+  renderClubBanner();
+  renderClubSwitch();
+  renderVertenteTabs();
+  renderGrid();
+}
+
+function currentCircuitoObj(){
+  return state.circuitos.find(c=>c.id===state.currentCircuito);
+}
+
+function renderClubBanner(){
+  const c = currentCircuitoObj();
+  const banner = document.getElementById('clubBanner');
+  if(!c){ banner.style.display='none'; return; }
+  banner.style.display='flex';
+  document.getElementById('clubName').textContent = c.nome;
+  document.getElementById('clubLoc').textContent = c.local || 'localidade não definida';
+}
+
+function renderClubSwitch(){
+  const wrap = document.getElementById('clubSwitch');
+  wrap.innerHTML = '';
+  state.circuitos.forEach(c=>{
+    const chip = document.createElement('button');
+    chip.className = 'club-chip'+(state.currentCircuito===c.id?' active':'');
+    chip.textContent = c.nome;
+    chip.onclick = ()=>{ state.currentCircuito = c.id; render(); };
+    wrap.appendChild(chip);
+  });
+  const addChip = document.createElement('button');
+  addChip.className = 'club-chip add';
+  addChip.textContent = '+ novo clube/campo';
+  addChip.onclick = ()=>openCircuitoModal(false);
+  wrap.appendChild(addChip);
+  const cfgChip = document.createElement('button');
+  cfgChip.className = 'club-chip';
+  cfgChip.textContent = '⚙';
+  cfgChip.onclick = openConfigModal;
+  wrap.appendChild(cfgChip);
+}
+
+function renderVertenteTabs(){
+  const wrap = document.getElementById('vertenteTabs');
+  const verts = [['minigolfe','Minigolfe'],['petergolfe','Petergolfe'],['feltro','Feltro']];
+  wrap.innerHTML = '';
+  verts.forEach(([key,label])=>{
+    const b = document.createElement('button');
+    b.className = 'tab'+(state.currentVertente===key?' active':'');
+    b.textContent = label;
+    b.onclick = ()=>{ state.currentVertente = key; render(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('pistaGrid');
+  const hint = document.getElementById('emptyHint');
+  grid.innerHTML = '';
+  if(!state.currentCircuito){
+    hint.style.display='block';
+    hint.textContent = 'Ainda não tens nenhum clube/campo. Toca em "+ novo clube/campo" para criar o primeiro.';
+    return;
+  }
+  const pistas = (state.pistasByCircuito[state.currentCircuito]||[])
+    .filter(p=>p.vertente===state.currentVertente).sort((a,b)=>a.numero-b.numero);
+
+  if(!pistas.length){ hint.style.display='block'; hint.textContent='Sem pistas de '+state.currentVertente+' neste clube ainda.'; return; }
+  hint.style.display='none';
+
+  pistas.forEach(p=>{
+    const card = document.createElement('div');
+    card.className = 'pista-card';
+    const filled = p.ficha_geral.direcao!=='reto' || p.ficha_geral.caimento || (p.registos&&p.registos.length);
+    const condicao = p.estado_atual ? p.estado_atual.condicao : 'normal';
+    let dotClass = filled ? (condicao==='normal' ? 'ok' : 'alerta') : 'vazio';
+    card.innerHTML = `
+      <div class="dot ${dotClass}"></div>
+      <div class="num">${p.numero}</div>
+      ${p.nome ? `<div class="nome">${escapeHtml(p.nome)}</div>` : ''}
+      <div class="sub">${p.vertente}</div>
+      <div class="regcount">${(p.registos||[]).length} registo${(p.registos||[]).length===1?'':'s'}</div>
+    `;
+    card.onclick = ()=>openSheet(p);
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------- sheet: editar pista ---------------- */
+function openSheet(pista){
+  state.editingPistaId = pista.id;
+  document.getElementById('fNome').value = pista.nome || '';
+  document.getElementById('sheetMeta').textContent = capitalize(pista.vertente)+' · Pista '+pista.numero+' · '+(currentCircuitoObj()?currentCircuitoObj().nome:'');
+
+  document.querySelectorAll('#estadoToggle .estado-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.v === (pista.estado_atual?pista.estado_atual.condicao:'normal'));
+  });
+  document.getElementById('fEstadoNota').value = pista.estado_atual?.nota || '';
+
+  document.getElementById('fCaimento').value = pista.ficha_geral.caimento||'';
+  document.getElementById('fDirecaoGeral').value = pista.ficha_geral.direcao||'reto';
+  document.getElementById('fReferencias').value = pista.ficha_geral.referencias||'';
+  document.getElementById('fObs').value = pista.ficha_geral.observacoes||'';
+  document.getElementById('fApontamento').value = pista.apontamento_pessoal||'';
+
+  renderCustomFields(pista.campos_customizados||[]);
+  renderRegistos(pista.registos||[]);
+  renderHistorico(pista.historico||[]);
+
+  document.getElementById('sheetOverlay').classList.add('open');
+}
+
+function renderCustomFields(fields){
+  const wrap = document.getElementById('customFields');
+  wrap.innerHTML = '';
+  fields.forEach((f,idx)=>{
+    const row = document.createElement('div');
+    row.className = 'custom-field';
+    row.innerHTML = `
+      <input type="text" value="${escapeHtml(f.campo)}" placeholder="nome do campo" data-idx="${idx}" data-k="campo">
+      <input type="text" value="${escapeHtml(f.valor)}" placeholder="valor" data-idx="${idx}" data-k="valor">
+      <button type="button" class="rm" data-idx="${idx}">&times;</button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.rm').forEach(btn=>{
+    btn.onclick = ()=>{ fields.splice(+btn.dataset.idx,1); renderCustomFields(fields); };
+  });
+  wrap._fields = fields;
+}
+document.getElementById('btnAddCustom').onclick = ()=>{
+  const wrap = document.getElementById('customFields');
+  const fields = wrap._fields || [];
+  fields.push({campo:'', valor:''});
+  renderCustomFields(fields);
+};
+
+function renderRegistos(registos){
+  const wrap = document.getElementById('registosList');
+  wrap._registos = registos;
+  if(!registos.length){ wrap.innerHTML = '<div class="hist-empty">Sem registos ainda. Adiciona o primeiro depois de jogares esta pista.</div>'; return; }
+  wrap.innerHTML = registos.slice().reverse().map((r)=>{
+    const realIdx = registos.indexOf(r);
+    return `
+    <div class="registo-card">
+      <div class="top">
+        <span class="data">${r.data}</span>
+        <div class="badges">
+          ${r.condicao_atm ? `<span class="badge ${r.condicao_atm}">${r.condicao_atm}</span>` : ''}
+          ${r.estado_pista ? `<span class="badge">${r.estado_pista}</span>` : ''}
+          <button class="rm" data-idx="${realIdx}">&times;</button>
+        </div>
+      </div>
+      <div class="grid2">
+        ${r.marca_bola ? `<div><span class="k">bola:</span> ${escapeHtml(r.marca_bola)}</div>` : ''}
+        ${r.dureza ? `<div><span class="k">dureza:</span> ${escapeHtml(r.dureza)}</div>` : ''}
+        ${r.salto ? `<div><span class="k">salto:</span> ${escapeHtml(r.salto)}</div>` : ''}
+        ${r.forca ? `<div><span class="k">força:</span> ${escapeHtml(r.forca)}</div>` : ''}
+        ${r.ponto_saida ? `<div><span class="k">saída:</span> ${escapeHtml(r.ponto_saida)}</div>` : ''}
+        ${r.aponta_a ? `<div><span class="k">aponta a:</span> ${escapeHtml(r.aponta_a)}</div>` : ''}
+        ${r.taco ? `<div><span class="k">taco:</span> ${escapeHtml(r.taco)}</div>` : ''}
+        ${r.direcao_emenda ? `<div><span class="k">emenda:</span> ${escapeHtml(r.direcao_emenda)}</div>` : ''}
+        ${r.onde_ficou ? `<div><span class="k">bola ficou:</span> ${escapeHtml(r.onde_ficou)}</div>` : ''}
+        ${r.resultado ? `<div><span class="k">resultado:</span> ${escapeHtml(r.resultado)}</div>` : ''}
+      </div>
+      ${r.nota ? `<div class="nota">${escapeHtml(r.nota)}</div>` : ''}
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.rm').forEach(btn=>{
+    btn.onclick = ()=>{ registos.splice(+btn.dataset.idx,1); renderRegistos(registos); };
+  });
+}
+
+function renderHistorico(hist){
+  const wrap = document.getElementById('histList');
+  if(!hist.length){ wrap.innerHTML = '<div class="hist-empty">Sem alterações registadas ainda.</div>'; return; }
+  wrap.innerHTML = hist.slice().reverse().slice(0,15).map(h=>`
+    <div class="hist-item"><b>${h.data}</b> — ${escapeHtml(h.campo)}: "${escapeHtml(h.de||'—')}" → "${escapeHtml(h.para||'—')}"</div>
+  `).join('');
+}
+
+document.querySelectorAll('#estadoToggle .estado-btn').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#estadoToggle .estado-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  };
+});
+
+document.getElementById('sheetClose').onclick = closeSheet;
+document.getElementById('sheetOverlay').onclick = (e)=>{ if(e.target.id==='sheetOverlay') closeSheet(); };
+function closeSheet(){ document.getElementById('sheetOverlay').classList.remove('open'); state.editingPistaId=null; }
+
+document.getElementById('btnSave').onclick = async ()=>{
+  const arr = state.pistasByCircuito[state.currentCircuito];
+  const pista = arr.find(p=>p.id===state.editingPistaId);
+  if(!pista) return;
+
+  const hist = pista.historico || [];
+  const today = new Date().toISOString().slice(0,10);
+  function track(campo, oldV, newV){ if((oldV||'')!==(newV||'')) hist.push({data:today, campo, de:oldV, para:newV}); }
+
+  const novoNome = document.getElementById('fNome').value.trim();
+  track('nome', pista.nome, novoNome);
+  pista.nome = novoNome;
+
+  const novaFicha = {
+    caimento: document.getElementById('fCaimento').value.trim(),
+    direcao: document.getElementById('fDirecaoGeral').value,
+    referencias: document.getElementById('fReferencias').value.trim(),
+    observacoes: document.getElementById('fObs').value.trim()
+  };
+  Object.keys(novaFicha).forEach(k=>track('ficha.'+k, pista.ficha_geral[k], novaFicha[k]));
+  pista.ficha_geral = novaFicha;
+
+  const wrap = document.getElementById('customFields');
+  const customFields = (wrap._fields||[]).filter(f=>f.campo.trim()!=='');
+  wrap.querySelectorAll('input').forEach(inp=>{
+    const idx = +inp.dataset.idx, k = inp.dataset.k;
+    if(customFields[idx]) customFields[idx][k] = inp.value;
+  });
+  pista.campos_customizados = customFields;
+
+  const novaCondicao = document.querySelector('#estadoToggle .estado-btn.active')?.dataset.v || 'normal';
+  const novaNota = document.getElementById('fEstadoNota').value.trim();
+  track('estado', pista.estado_atual?.condicao, novaCondicao);
+  pista.estado_atual = {condicao:novaCondicao, nota:novaNota, ultima_alteracao:today};
+
+  pista.apontamento_pessoal = document.getElementById('fApontamento').value;
+  pista.registos = document.getElementById('registosList')._registos || pista.registos || [];
+  pista.historico = hist;
+
+  await savePistaCloudOrLocal(pista);
+  closeSheet(); render();
+  showToast('Pista guardada');
+};
+
+document.getElementById('btnDelete').onclick = async ()=>{
+  const arr = state.pistasByCircuito[state.currentCircuito];
+  const pista = arr.find(p=>p.id===state.editingPistaId);
+  if(!pista) return;
+  if(!confirm('Eliminar a pista '+pista.numero+' ('+pista.vertente+')? Não pode ser desfeito.')) return;
+  await deletePistaCloudOrLocal(pista);
+  closeSheet(); render();
+  showToast('Pista eliminada');
+};
+
+/* ---------------- novo registo ---------------- */
+document.getElementById('btnAddRegisto').onclick = ()=>{
+  document.querySelectorAll('#modalRegisto .toggle-opt').forEach(o=>o.classList.remove('active'));
+  ['rMarca','rSalto','rForca','rSaida','rApontaA','rOndeFicou','rResultado','rNota'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modalRegisto').classList.add('open');
+};
+document.querySelectorAll('#modalRegisto .toggle-row').forEach(row=>{
+  row.addEventListener('click', (e)=>{
+    const opt = e.target.closest('.toggle-opt');
+    if(!opt) return;
+    row.querySelectorAll('.toggle-opt').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+  });
+});
+document.getElementById('rCancel').onclick = ()=> document.getElementById('modalRegisto').classList.remove('open');
+document.getElementById('rConfirm').onclick = ()=>{
+  const wrap = document.getElementById('registosList');
+  const registos = wrap._registos || [];
+  const getSel = (id)=>{ const el = document.getElementById(id).querySelector('.toggle-opt.active'); return el?el.dataset.v:''; };
+  registos.push({
+    id: Date.now().toString(36),
+    data: new Date().toISOString().slice(0,10),
+    condicao_atm: getSel('rCondicao'),
+    estado_pista: getSel('rEstadoPista'),
+    marca_bola: document.getElementById('rMarca').value.trim(),
+    salto: document.getElementById('rSalto').value.trim(),
+    dureza: getSel('rDureza'),
+    forca: document.getElementById('rForca').value.trim(),
+    ponto_saida: document.getElementById('rSaida').value.trim(),
+    aponta_a: document.getElementById('rApontaA').value.trim(),
+    taco: getSel('rTaco'),
+    direcao_emenda: getSel('rEmenda'),
+    onde_ficou: document.getElementById('rOndeFicou').value.trim(),
+    resultado: document.getElementById('rResultado').value.trim(),
+    nota: document.getElementById('rNota').value.trim()
+  });
+  renderRegistos(registos);
+  document.getElementById('modalRegisto').classList.remove('open');
+};
+
+/* ---------------- add pista rapida ---------------- */
+document.getElementById('btnAdd').onclick = ()=>{
+  if(!state.currentCircuito){ openCircuitoModal(false); return; }
+  const arr = state.pistasByCircuito[state.currentCircuito].filter(p=>p.vertente===state.currentVertente);
+  const nextNum = arr.length ? Math.max(...arr.map(p=>p.numero))+1 : 1;
+  const nova = blankPista(state.currentCircuito, state.currentVertente, nextNum);
+  savePistaCloudOrLocal(nova).then(()=>{ render(); openSheet(nova); });
+};
+
+/* ---------------- clube/circuito modal (criar + editar) ---------------- */
+let editingCircuitoMode = false;
+function openCircuitoModal(editMode){
+  editingCircuitoMode = editMode;
+  const title = document.getElementById('circuitoModalTitle');
+  const countsWrap = document.getElementById('mCountsWrap');
+  const delWrap = document.getElementById('mDeleteWrap');
+  if(editMode){
+    const c = currentCircuitoObj();
+    title.textContent = 'Editar clube / campo';
+    document.getElementById('mNomeCircuito').value = c.nome;
+    document.getElementById('mLocalCircuito').value = c.local||'';
+    countsWrap.style.display = 'none';
+    delWrap.style.display = 'flex';
+  } else {
+    title.textContent = 'Novo clube / campo';
+    document.getElementById('mNomeCircuito').value = '';
+    document.getElementById('mLocalCircuito').value = '';
+    countsWrap.style.display = 'block';
+    delWrap.style.display = 'none';
+  }
+  document.getElementById('modalCircuito').classList.add('open');
+}
+document.getElementById('btnEditClub').onclick = ()=>openCircuitoModal(true);
+document.getElementById('mCancel').onclick = ()=> document.getElementById('modalCircuito').classList.remove('open');
+
+document.getElementById('mConfirm').onclick = async ()=>{
+  const nome = document.getElementById('mNomeCircuito').value.trim();
+  if(!nome){ alert('Dá um nome ao clube/campo.'); return; }
+  const local = document.getElementById('mLocalCircuito').value.trim();
+
+  if(editingCircuitoMode){
+    const c = currentCircuitoObj();
+    c.nome = nome; c.local = local;
+    await saveCircuitoMeta(c);
+    document.getElementById('modalCircuito').classList.remove('open');
+    render();
+    showToast('Clube/campo atualizado');
+    return;
+  }
+
+  const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '-' + Date.now().toString(36);
+  const counts = {
+    minigolfe: +document.getElementById('mMini').value || 0,
+    petergolfe: +document.getElementById('mPeter').value || 0,
+    feltro: +document.getElementById('mFeltro').value || 0
+  };
+  const pistas = [];
+  Object.entries(counts).forEach(([vert,n])=>{ for(let i=1;i<=n;i++) pistas.push(blankPista(id, vert, i)); });
+  await createCircuitoCloudOrLocal({id, nome, local}, pistas);
+  state.currentCircuito = id;
+  document.getElementById('modalCircuito').classList.remove('open');
+  render();
+  showToast('Clube/campo criado');
+};
+
+document.getElementById('mDeleteCircuito').onclick = async ()=>{
+  const c = currentCircuitoObj();
+  if(!confirm('Eliminar "'+c.nome+'" e todas as suas pistas? Não pode ser desfeito.')) return;
+  await deleteCircuitoCloudOrLocal(c.id);
+  state.currentCircuito = state.circuitos.length ? state.circuitos[0].id : null;
+  document.getElementById('modalCircuito').classList.remove('open');
+  render();
+  showToast('Clube/campo eliminado');
+};
+
+/* ---------------- definições / firebase ---------------- */
+function openConfigModal(){
+  document.getElementById('cfgFirebase').value = localStorage.getItem(LS_CFG) || '';
+  document.getElementById('modalConfig').classList.add('open');
+}
+document.getElementById('cfgCancel').onclick = ()=> document.getElementById('modalConfig').classList.remove('open');
+document.getElementById('cfgSave').onclick = ()=>{
+  const raw = document.getElementById('cfgFirebase').value.trim();
+  if(!raw){ localStorage.removeItem(LS_CFG); location.reload(); return; }
+  try{
+    JSON.parse(raw);
+    localStorage.setItem(LS_CFG, raw);
+    showToast('A ligar ao Firebase...');
+    setTimeout(()=>location.reload(), 600);
+  }catch(e){ alert('Isso não parece um JSON válido de firebaseConfig.'); }
+};
+
+/* ---------------- helpers ---------------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------------- boot ---------------- */
+(function boot(){
+  seedIfEmpty();
+  if(!state.currentCircuito && state.circuitos.length) state.currentCircuito = state.circuitos[0].id;
+  updateStatusPill();
+  render();
+  tryInitFirebase();
+})();
+</script>
+</body>
+</html>
