@@ -181,18 +181,35 @@
     </div>
     <div class="sheet-body">
 
-      <div class="section-title first">Estado geral da pista</div>
-      <div class="estado-toggle" id="estadoToggle">
-        <button type="button" class="estado-btn sel-normal" data-v="normal">Normal</button>
-        <button type="button" class="estado-btn sel-atencao" data-v="atencao">Atenção</button>
-        <button type="button" class="estado-btn sel-alerta" data-v="alerta">Alerta</button>
+      <div class="section-title first">Bola e configuração inicial<span class="hint">o que ir buscar ao saco</span></div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Bola habitual (marca/modelo)</label>
+          <input type="text" id="fBolaModelo" placeholder="ex: Poli 3, Ace vermelha">
+        </div>
+        <div class="field-group">
+          <label>Salto</label>
+          <input type="text" id="fSaltoGeral" placeholder="ex: baixo, médio, alto">
+        </div>
       </div>
-      <div class="field-group" style="margin-top:10px">
-        <label>Nota de estado (ex: obstáculo deslocado, obra recente)</label>
-        <input type="text" id="fEstadoNota" placeholder="opcional">
+      <div class="field-group">
+        <label>Dureza da bola</label>
+        <div class="toggle-row" id="fDurezaGeral">
+          <div class="toggle-opt" data-v="mole">Mole</div>
+          <div class="toggle-opt" data-v="media">Normal</div>
+          <div class="toggle-opt" data-v="dura">Dura</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Ponto / círculo de saída</label>
+        <input type="text" id="fPontoSaidaGeral" placeholder="ex: círculo direito, encostado à linha">
+      </div>
+      <div class="field-group">
+        <label>Referências fixas da pista</label>
+        <input type="text" id="fReferencias" placeholder="ex: alinhar com a antena, risca na parede direita">
       </div>
 
-      <div class="section-title">Ficha de referência<span class="hint">o que costuma valer nesta pista</span></div>
+      <div class="section-title">Comportamento da pista</div>
       <div class="field-row">
         <div class="field-group">
           <label>Caimento geral</label>
@@ -208,19 +225,26 @@
         </div>
       </div>
       <div class="field-group">
-        <label>Referências fixas da pista</label>
-        <input type="text" id="fReferencias" placeholder="ex: alinhar com a antena, risca na parede direita">
-      </div>
-      <div class="field-group">
         <label>Observações gerais</label>
         <textarea id="fObs" placeholder="qualquer coisa que valha sempre nesta pista"></textarea>
+      </div>
+
+      <div class="section-title">Estado atual<span class="hint">condição de hoje</span></div>
+      <div class="estado-toggle" id="estadoToggle">
+        <button type="button" class="estado-btn sel-normal" data-v="normal">Normal</button>
+        <button type="button" class="estado-btn sel-atencao" data-v="atencao">Atenção</button>
+        <button type="button" class="estado-btn sel-alerta" data-v="alerta">Alerta</button>
+      </div>
+      <div class="field-group" style="margin-top:10px">
+        <label>Nota de estado (ex: obstáculo deslocado, obra recente)</label>
+        <input type="text" id="fEstadoNota" placeholder="opcional">
       </div>
 
       <div class="section-title">Campos personalizados</div>
       <div id="customFields"></div>
       <button type="button" class="add-custom" id="btnAddCustom">+ adicionar campo novo</button>
 
-      <div class="section-title">Registos de jogadas<span class="hint">condição, bola, resultado</span></div>
+      <div class="section-title">Registos de jogadas<span class="hint">variações por condição do dia</span></div>
       <div id="registosList"></div>
       <button type="button" class="add-registo" id="btnAddRegisto">+ novo registo de jogada</button>
 
@@ -411,7 +435,7 @@ function blankPista(circuitoId, vertente, numero, nome){
     id: circuitoId+'_'+vertente+'_'+numero+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     circuitoId, vertente, numero, nome: nome||'',
     estado_atual:{condicao:'normal', nota:'', ultima_alteracao:new Date().toISOString().slice(0,10)},
-    ficha_geral:{caimento:'', direcao:'reto', referencias:'', observacoes:''},
+    ficha_geral:{bola_modelo:'', salto:'', dureza:'', ponto_saida:'', caimento:'', direcao:'reto', referencias:'', observacoes:''},
     campos_customizados:[],
     registos:[],
     apontamento_pessoal:'',
@@ -590,7 +614,7 @@ function renderGrid(){
   pistas.forEach(p=>{
     const card = document.createElement('div');
     card.className = 'pista-card';
-    const filled = p.ficha_geral.direcao!=='reto' || p.ficha_geral.caimento || (p.registos&&p.registos.length);
+    const filled = p.ficha_geral.bola_modelo || p.ficha_geral.direcao!=='reto' || p.ficha_geral.caimento || (p.registos&&p.registos.length);
     const condicao = p.estado_atual ? p.estado_atual.condicao : 'normal';
     let dotClass = filled ? (condicao==='normal' ? 'ok' : 'alerta') : 'vazio';
     card.innerHTML = `
@@ -616,6 +640,12 @@ function openSheet(pista){
   });
   document.getElementById('fEstadoNota').value = pista.estado_atual?.nota || '';
 
+  document.getElementById('fBolaModelo').value = pista.ficha_geral.bola_modelo||'';
+  document.getElementById('fSaltoGeral').value = pista.ficha_geral.salto||'';
+  document.getElementById('fPontoSaidaGeral').value = pista.ficha_geral.ponto_saida||'';
+  document.querySelectorAll('#fDurezaGeral .toggle-opt').forEach(o=>{
+    o.classList.toggle('active', o.dataset.v === (pista.ficha_geral.dureza||''));
+  });
   document.getElementById('fCaimento').value = pista.ficha_geral.caimento||'';
   document.getElementById('fDirecaoGeral').value = pista.ficha_geral.direcao||'reto';
   document.getElementById('fReferencias').value = pista.ficha_geral.referencias||'';
@@ -723,6 +753,10 @@ document.getElementById('btnSave').onclick = async ()=>{
   pista.nome = novoNome;
 
   const novaFicha = {
+    bola_modelo: document.getElementById('fBolaModelo').value.trim(),
+    salto: document.getElementById('fSaltoGeral').value.trim(),
+    dureza: document.querySelector('#fDurezaGeral .toggle-opt.active')?.dataset.v || '',
+    ponto_saida: document.getElementById('fPontoSaidaGeral').value.trim(),
     caimento: document.getElementById('fCaimento').value.trim(),
     direcao: document.getElementById('fDirecaoGeral').value,
     referencias: document.getElementById('fReferencias').value.trim(),
@@ -769,7 +803,7 @@ document.getElementById('btnAddRegisto').onclick = ()=>{
   ['rMarca','rSalto','rForca','rSaida','rApontaA','rOndeFicou','rResultado','rNota'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('modalRegisto').classList.add('open');
 };
-document.querySelectorAll('#modalRegisto .toggle-row').forEach(row=>{
+document.querySelectorAll('.toggle-row').forEach(row=>{
   row.addEventListener('click', (e)=>{
     const opt = e.target.closest('.toggle-opt');
     if(!opt) return;
