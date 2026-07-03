@@ -478,8 +478,14 @@ function tryInitFirebase(){
     cloudMode = true;
     updateStatusPill();
     loadFromCloud();
-  }catch(e){ console.error('Erro ao ligar ao Firebase', e); cloudMode = false; updateStatusPill(); }
+  }catch(e){
+    console.error('Erro ao ligar ao Firebase', e);
+    cloudMode = false; lastCloudError = e.message || String(e); updateStatusPill();
+    alert('ERRO REAL DO FIREBASE:\n\n' + lastCloudError + '\n\n(tira um print a esta mensagem e envia)');
+  }
 }
+
+let lastCloudError = '';
 
 async function loadFromCloud(){
   try{
@@ -496,7 +502,8 @@ async function loadFromCloud(){
     render();
   }catch(e){
     console.error('Erro a carregar da nuvem, a usar modo local', e);
-    cloudMode = false; updateStatusPill();
+    cloudMode = false; lastCloudError = e.message || String(e); updateStatusPill();
+    alert('ERRO REAL DO FIREBASE (ao ler dados):\n\n' + lastCloudError + '\n\n(tira um print a esta mensagem e envia)');
   }
 }
 
@@ -562,7 +569,12 @@ function updateStatusPill(){
   const pill = document.getElementById('statusPill');
   const banner = document.getElementById('configBanner');
   if(cloudMode){ pill.textContent='sincronizado'; pill.classList.remove('offline'); banner.style.display='none'; }
-  else{ pill.textContent='local'; pill.classList.add('offline'); banner.style.display='block'; }
+  else{
+    pill.textContent='local'; pill.classList.add('offline'); banner.style.display='block';
+    banner.textContent = lastCloudError
+      ? ('A gravar apenas neste aparelho. Erro ao ligar à nuvem: ' + lastCloudError)
+      : 'A gravar apenas neste aparelho (modo local).';
+  }
 }
 
 function render(){
