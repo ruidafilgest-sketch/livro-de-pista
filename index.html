@@ -444,17 +444,41 @@ function blankPista(circuitoId, vertente, numero, nome){
 }
 
 /* ---------------- firebase (cloud) ---------------- */
+// Configuração do projeto "livro-de-pista" — igual ao padrão dos outros
+// sistemas (SWC2026, Vizelgolfe): ligação automática, sem passos por aparelho.
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCZ3Z72LUdtXwHGufm-wuXiDPLqdlwZNgc",
+  authDomain: "livro-de-pista.firebaseapp.com",
+  projectId: "livro-de-pista",
+  storageBucket: "livro-de-pista.firebasestorage.app",
+  messagingSenderId: "968019356188",
+  appId: "1:968019356188:web:e2699396bee26e4c510dd9"
+};
+
+let firebaseRetries = 0;
 function tryInitFirebase(){
+  if(typeof firebase === 'undefined'){
+    firebaseRetries++;
+    if(firebaseRetries > 8){
+      console.warn('Firebase indisponível (rede/bloqueador). A app continua em modo local.');
+      cloudMode = false; updateStatusPill();
+      return;
+    }
+    setTimeout(tryInitFirebase, 1200);
+    return;
+  }
   const raw = localStorage.getItem(LS_CFG);
-  if(!raw) return;
+  let cfg = DEFAULT_FIREBASE_CONFIG;
+  if(raw){
+    try{ cfg = JSON.parse(raw); }catch(e){ console.error('Config Firebase local inválida, a usar a config por defeito', e); }
+  }
   try{
-    const cfg = JSON.parse(raw);
-    firebase.initializeApp(cfg);
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
     cloudMode = true;
     updateStatusPill();
     loadFromCloud();
-  }catch(e){ console.error('Config Firebase inválida', e); cloudMode = false; }
+  }catch(e){ console.error('Erro ao ligar ao Firebase', e); cloudMode = false; updateStatusPill(); }
 }
 
 async function loadFromCloud(){
